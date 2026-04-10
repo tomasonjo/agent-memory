@@ -357,20 +357,6 @@ try:
                 self._session_id, role_str, content, metadata=metadata
             )
 
-        async def aput_messages(self, messages: list[ChatMessage]) -> None:
-            """Store a batch of ChatMessages in memory.
-
-            Overrides BaseMemory's default which dispatches via
-            ``asyncio.to_thread(self.put_messages, ...)``. That default path
-            bridges back to the original event loop via
-            ``run_coroutine_threadsafe`` and under load can time out (or
-            silently drop) the final message written at end-of-run from
-            ``FunctionAgent.finalize``. Writing directly with ``await``
-            avoids the thread hop entirely.
-            """
-            for msg in messages:
-                await self.aput(msg)
-
         async def aget_all(self) -> list[ChatMessage]:
             return await self.aget(input=None)
 
