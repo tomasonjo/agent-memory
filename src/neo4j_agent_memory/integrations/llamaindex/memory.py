@@ -357,6 +357,23 @@ try:
                 self._session_id, role_str, content, metadata=metadata
             )
 
+        async def aput_messages(self, messages: list[ChatMessage]) -> None:
+            """Store a batch of ChatMessages in memory.
+
+            Overrides BaseMemory's default, which dispatches via
+            ``asyncio.to_thread(self.put_messages, ...)``. That default path
+            bridges the write to a worker thread and back to the main loop
+            via ``run_coroutine_threadsafe``. Under the LlamaIndex
+            ``workflows`` runtime, the enclosing step can be cancelled by a
+            per-step timeout while the worker is still running, surfacing
+            as a ``TimeoutError`` at ``FunctionAgent.finalize`` and
+            dropping the final assistant message. Writing directly with
+            ``await`` keeps the work on the live loop so the step sees it
+            as ordinary async work.
+            """
+            for msg in messages:
+                await self.aput(msg)
+
         async def aget_all(self) -> list[ChatMessage]:
             return await self.aget(input=None)
 
