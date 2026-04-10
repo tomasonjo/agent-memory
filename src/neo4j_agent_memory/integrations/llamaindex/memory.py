@@ -348,9 +348,28 @@ try:
             if role_str == "tool" and content:
                 content = self._extract_mcp_text(content)
 
+            # Assistant messages with only tool_calls may have no text content;
+            # store an empty string so the message (and its metadata) is preserved.
+            if content is None:
+                content = ""
+
             await self._client.short_term.add_message(
                 self._session_id, role_str, content, metadata=metadata
             )
+
+        async def aput_messages(self, messages: list[ChatMessage]) -> None:
+            """Store a batch of ChatMessages in memory.
+
+            Overrides BaseMemory's default which dispatches via
+            ``asyncio.to_thread(self.put_messages, ...)``. That default path
+            bridges back to the original event loop via
+            ``run_coroutine_threadsafe`` and can silently drop the final
+            message at end-of-run (loop shutting down, timeout, or a
+            mismatched loop). Writing directly with ``await`` avoids the
+            thread hop entirely.
+            """
+            for msg in messages:
+                await self.aput(msg)
 
         async def aget_all(self) -> list[ChatMessage]:
             return await self.aget(input=None)
