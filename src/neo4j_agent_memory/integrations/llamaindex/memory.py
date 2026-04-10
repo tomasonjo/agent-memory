@@ -72,7 +72,7 @@ try:
                 nest_asyncio.apply()
                 return self._loop.run_until_complete(coro)
             future = asyncio.run_coroutine_threadsafe(coro, self._loop)
-            return future.result(timeout=60)
+            return future.result(timeout=120)
 
         @staticmethod
         def _parse_role(role_value: str) -> MessageRole:
